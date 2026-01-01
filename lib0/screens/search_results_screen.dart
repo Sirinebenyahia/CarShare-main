@@ -25,7 +25,6 @@ class SearchResultsScreen extends StatelessWidget {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
-                  // Barre de recherche
                   TextField(
                     decoration: InputDecoration(
                       hintText: "D'où partez-vous ?",
@@ -39,7 +38,6 @@ class SearchResultsScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  // Filtres (Boutons horizontaux)
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
@@ -158,7 +156,6 @@ class _RideCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          // Itinéraire (Points et ligne)
           Row(
             children: [
               Column(
@@ -192,7 +189,10 @@ class _RideCard extends StatelessWidget {
                 ],
               ),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  // === ACTION DU BOUTON RESERVER ===
+                  _showBookingSheet(context);
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2563EB),
                   foregroundColor: Colors.white,
@@ -203,6 +203,123 @@ class _RideCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  // --- FONCTION POUR AFFICHER LE PANNEAU DE RESERVATION ---
+  void _showBookingSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _BookingSheet(rideData: {
+        'name': name,
+        'price': price,
+        'from': from,
+        'to': to,
+        'time': time,
+        'date': date,
+      }),
+    );
+  }
+}
+
+// --- LE PANNEAU DE RESERVATION (UI INTERNE) ---
+class _BookingSheet extends StatefulWidget {
+  final Map<String, dynamic> rideData;
+  const _BookingSheet({required this.rideData});
+
+  @override
+  State<_BookingSheet> createState() => _BookingSheetState();
+}
+
+class _BookingSheetState extends State<_BookingSheet> {
+  int selectedSeats = 1;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Réserver ce trajet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+            ],
+          ),
+          const SizedBox(height: 20),
+          // Résumé rapide
+          Container(
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(color: const Color(0xFFF6F7FB), borderRadius: BorderRadius.circular(12)),
+            child: Column(
+              children: [
+                _row('Conducteur', widget.rideData['name']),
+                _row('Trajet', "${widget.rideData['from']} → ${widget.rideData['to']}"),
+                _row('Date', widget.rideData['date']),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text('Nombre de places', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: List.generate(4, (index) => _seatBtn(index + 1)),
+          ),
+          const SizedBox(height: 30),
+          // Bouton final de paiement
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Réservation confirmée !')),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2563EB),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Text(
+                'Payer ${(double.parse(widget.rideData['price']) * selectedSeats).toStringAsFixed(2)} TND',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _row(String label, String value) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(label), Text(value, style: const TextStyle(fontWeight: FontWeight.bold))]),
+  );
+
+  Widget _seatBtn(int n) {
+    bool active = selectedSeats == n;
+    return GestureDetector(
+      onTap: () => setState(() => selectedSeats = n),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: active ? const Color(0xFFEBF2FF) : Colors.white,
+          border: Border.all(color: active ? const Color(0xFF2563EB) : Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text('$n', style: TextStyle(color: active ? const Color(0xFF2563EB) : Colors.black, fontWeight: FontWeight.bold)),
       ),
     );
   }
