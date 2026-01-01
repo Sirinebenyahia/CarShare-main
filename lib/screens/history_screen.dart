@@ -16,7 +16,6 @@ class HistoryScreen extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
     return Scaffold(
       appBar: AppBar(title: const Text('Historique')),
-      bottomNavigationBar: const BottomNav(current: 'history'),
       body: user == null
           ? const Center(child: Text('Veuillez vous connecter.'))
           : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(

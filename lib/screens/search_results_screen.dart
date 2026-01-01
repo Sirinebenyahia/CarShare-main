@@ -1,121 +1,208 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-
-import '../services/ride_service.dart';
-import '../widgets/back_button.dart';
 
 class SearchResultsScreen extends StatelessWidget {
-  const SearchResultsScreen({
-    super.key,
-    required this.from,
-    required this.to,
-  });
-
   final String from;
   final String to;
 
-  static final RideService _rideService = RideService();
+  const SearchResultsScreen({super.key, this.from = '', this.to = ''});
 
   @override
   Widget build(BuildContext context) {
-    final String fromQuery = from.trim();
-    final String toQuery = to.trim();
-
     return Scaffold(
-      appBar: AppBarWithBack(
-        title: 'Résultats',
-        fallbackRoute: '/home', // Retour à l'accueil
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+      backgroundColor: const Color(0xFFF6F7FB),
+      body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Card(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            // --- SECTION HAUTE : RECHERCHE ET FILTRES ---
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Rechercher un trajet',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  // Barre de recherche
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: "D'où partez-vous ?",
+                      prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                      filled: true,
+                      fillColor: const Color(0xFFF6F7FB),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Filtres (Boutons horizontaux)
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildFilterButton(Icons.tune, "Filtres", isSelected: true),
+                        _buildFilterButton(null, "Prix"),
+                        _buildFilterButton(null, "Places"),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // --- SECTION BASSE : LISTE DES TRAJETS ---
+            Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Votre recherche', style: TextStyle(fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 8),
-                    Text('Départ: $fromQuery'),
-                    Text('Arrivée: $toQuery'),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: const [
+                        Text('Trajets disponibles', style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text('5 résultats', style: TextStyle(color: Colors.grey)),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: ListView(
+                        children: const [
+                          _RideCard(
+                            name: "Salma Béji",
+                            price: "25",
+                            from: "Tunis",
+                            to: "Sousse",
+                            time: "14:30",
+                            date: "28 Nov 2025",
+                            places: 3,
+                          ),
+                          _RideCard(
+                            name: "Karim Mansour",
+                            price: "22",
+                            from: "Tunis",
+                            to: "Sousse",
+                            time: "16:00",
+                            date: "28 Nov 2025",
+                            places: 2,
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                stream: _rideService.searchRidesStream(from: fromQuery, to: toQuery),
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return Center(child: Text('Erreur: ${snapshot.error}'));
-                  }
-                  if (!snapshot.hasData) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  final docs = snapshot.data!.docs;
-                  if (docs.isEmpty) {
-                    return const Center(child: Text('Aucun trajet trouvé.'));
-                  }
-
-                  return ListView.separated(
-                    itemCount: docs.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final d = docs[index];
-                      final data = d.data();
-                      final from = (data['from'] ?? '').toString();
-                      final to = (data['to'] ?? '').toString();
-                      final driverName = (data['driverName'] ?? '').toString();
-                      final price = data['priceTnd'];
-                      final seats = data['seatsAvailable'];
-                      final womenOnly = (data['womenOnly'] ?? false) == true;
-
-                      return InkWell(
-                        onTap: () => context.go('/ride/${d.id}'),
-                        child: Card(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Row(
-                              children: [
-                                const CircleAvatar(child: Icon(Icons.person)),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text('$from → $to', style: const TextStyle(fontWeight: FontWeight.w700)),
-                                      const SizedBox(height: 4),
-                                      Text(driverName, style: const TextStyle(color: Colors.black54)),
-                                      const SizedBox(height: 4),
-                                      Text('${seats ?? ''} places', style: const TextStyle(color: Colors.black54)),
-                                      if (womenOnly) ...[
-                                        const SizedBox(height: 6),
-                                        const Chip(label: Text('Femmes uniquement')),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                                Text('${price ?? ''} TND', style: const TextStyle(fontWeight: FontWeight.w700)),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildFilterButton(IconData? icon, String label, {bool isSelected = false}) {
+    return Container(
+      margin: const EdgeInsets.only(right: 10),
+      child: FilterChip(
+        label: Text(label),
+        onSelected: (b) {},
+        avatar: icon != null ? Icon(icon, size: 18, color: isSelected ? Colors.blue : Colors.grey) : null,
+        backgroundColor: const Color(0xFFF6F7FB),
+        selectedColor: Colors.blue.withOpacity(0.1),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        side: BorderSide.none,
+      ),
+    );
+  }
+}
+
+// --- WIDGET CARTE DE TRAJET ---
+class _RideCard extends StatelessWidget {
+  final String name, price, from, to, time, date;
+  final int places;
+
+  const _RideCard({
+    required this.name, required this.price, required this.from,
+    required this.to, required this.time, required this.date, required this.places,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              CircleAvatar(backgroundColor: Colors.blue, child: Text(name[0], style: const TextStyle(color: Colors.white))),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text('$places places', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                  ],
+                ),
+              ),
+              Text('$price TND', style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 16)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Itinéraire (Points et ligne)
+          Row(
+            children: [
+              Column(
+                children: [
+                  const Icon(Icons.circle, color: Colors.blue, size: 12),
+                  Container(width: 2, height: 30, color: Colors.grey[200]),
+                  const Icon(Icons.location_on, color: Colors.blue, size: 12),
+                ],
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(from, style: const TextStyle(fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 24),
+                  Text(to, style: const TextStyle(fontWeight: FontWeight.w500)),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Divider(),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.access_time, size: 16, color: Colors.grey),
+                  const SizedBox(width: 4),
+                  Text('$date à $time', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                ],
+              ),
+              ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2563EB),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: const Text('Réserver'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

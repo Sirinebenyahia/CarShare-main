@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
+import '../widgets/bottom_nav.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
