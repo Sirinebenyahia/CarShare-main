@@ -1,61 +1,45 @@
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthService {
-  AuthService({FirebaseAuth? auth}) : _auth = auth ?? FirebaseAuth.instance;
-
-  final FirebaseAuth _auth;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Stream<User?> authStateChanges() => _auth.authStateChanges();
-
   User? get currentUser => _auth.currentUser;
 
-  Future<UserCredential> signInWithEmail({
+  Future<UserCredential> signUp({
     required String email,
     required String password,
   }) async {
-    // Désactiver App Check temporairement pour contourner CONFIGURATION_NOT_FOUND
-    try {
-      return await _auth.signInWithEmailAndPassword(email: email, password: password);
-    } on FirebaseAuthException catch (e) {
-      if (e.message?.contains('CONFIGURATION_NOT_FOUND') == true) {
-        // Réessayer sans App Check
-        await Future.delayed(const Duration(seconds: 1));
-        return await _auth.signInWithEmailAndPassword(email: email, password: password);
-      }
-      rethrow;
-    }
+    return _auth.createUserWithEmailAndPassword(email: email, password: password);
   }
 
-  Future<UserCredential> signUpWithEmail({
+  Future<UserCredential> signIn({
     required String email,
     required String password,
   }) async {
-    // Désactiver App Check temporairement pour contourner CONFIGURATION_NOT_FOUND
-    try {
-      return await _auth.createUserWithEmailAndPassword(email: email, password: password);
-    } on FirebaseAuthException catch (e) {
-      if (e.message?.contains('CONFIGURATION_NOT_FOUND') == true) {
-        // Réessayer sans App Check
-        await Future.delayed(const Duration(seconds: 1));
-        return await _auth.createUserWithEmailAndPassword(email: email, password: password);
-      }
-      rethrow;
-    }
-  }
-
-  Future<UserCredential> signInOrCreateWithEmail({
-    required String email,
-    required String password,
-  }) async {
-    try {
-      return await signInWithEmail(email: email, password: password);
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'user-not-found') {
-        return await signUpWithEmail(email: email, password: password);
-      }
-      rethrow;
-    }
+    return _auth.signInWithEmailAndPassword(email: email, password: password);
   }
 
   Future<void> signOut() => _auth.signOut();
+
+  Future<void> sendPasswordResetEmail(String email) {
+    return _auth.sendPasswordResetEmail(email: email);
+  }
+
+  Future<void> updatePassword(String newPassword) async {
+    final user = currentUser;
+    if (user == null) throw Exception('No user logged in');
+    await user.updatePassword(newPassword);
+  }
+
+  Future<void> reauthenticate({
+    required String email,
+    required String password,
+  }) async {
+    final user = currentUser;
+    if (user == null) throw Exception('No user logged in');
+
+    final credential = EmailAuthProvider.credential(email: email, password: password);
+    await user.reauthenticateWithCredential(credential);
+  }
 }

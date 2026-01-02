@@ -1,44 +1,103 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
-import 'firebase_options.dart';
-import 'router/app_router.dart';
+// CONFIG
+import 'config/theme.dart';
+import 'config/routes.dart';
+
+// PROVIDERS
+import 'providers/auth_provider.dart';
+import 'providers/user_provider.dart';
+import 'providers/ride_provider.dart';
+import 'providers/booking_provider.dart';
+import 'providers/wallet_provider.dart';
+import 'providers/vehicle_provider.dart';
+import 'providers/group_provider.dart';
+import 'providers/chat_provider.dart';
+import 'providers/ride_request_provider.dart';
+
+// FIREBASE TEST (DEV ONLY)
+import 'services/firebase_test.dart';
 
 Future<void> main() async {
-  // Assure que Flutter est correctement initialisé
+  /// OBLIGATOIRE pour Firebase
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Évite l'erreur [core/duplicate-app]
-  try {
-    if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
-    }
-  } catch (e) {
-    // Firebase app already initialized or other error
-  }
+  /// INITIALISATION FIREBASE
+  await Firebase.initializeApp();
 
-  runApp(const MyApp());
+  /// TEST FIREBASE (à garder en DEV seulement)
+  await FirebaseTest.testConnection();
+
+  /// FORMAT DATE FR
+  await initializeDateFormatting('fr_FR', null);
+
+  runApp(const CarShareTunisie());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class CarShareTunisie extends StatelessWidget {
+  const CarShareTunisie({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final theme = ThemeData(
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: Colors.blue,
-      ),
-      useMaterial3: true,
-    );
+    return MultiProvider(
+      providers: [
+        /// AUTH & USER
+        ChangeNotifierProvider<AuthProvider>(
+          create: (_) => AuthProvider(),
+        ),
+        ChangeNotifierProvider<UserProvider>(
+          create: (_) => UserProvider(),
+        ),
 
-    return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      title: 'CarShare Tunisie',
-      theme: theme,
-      routerConfig: appRouter,
+        /// CORE FEATURES
+        ChangeNotifierProvider<RideProvider>(
+          create: (_) => RideProvider(),
+        ),
+        ChangeNotifierProvider<BookingProvider>(
+          create: (_) => BookingProvider(),
+        ),
+        ChangeNotifierProvider<VehicleProvider>(
+          create: (_) => VehicleProvider(),
+        ),
+
+        /// SOCIAL / GROUPS
+        ChangeNotifierProvider<GroupProvider>(
+          create: (_) => GroupProvider(),
+        ),
+        ChangeNotifierProvider<ChatProvider>(
+          create: (_) => ChatProvider(),
+        ),
+
+        /// REQUESTS & WALLET
+        ChangeNotifierProvider<RideRequestProvider>(
+          create: (_) => RideRequestProvider(),
+        ),
+        ChangeNotifierProvider<WalletProvider>(
+          create: (_) => WalletProvider(),
+        ),
+      ],
+
+      /// ON ÉCOUTE L'ÉTAT AUTH GLOBAL
+      child: Consumer<AuthProvider>(
+        builder: (context, authProvider, _) {
+          return MaterialApp(
+            title: 'CarShare Tunisie',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+
+            /// ROUTING CENTRALISÉ
+            initialRoute: authProvider.isAuthenticated
+                ? AppRoutes.dashboard
+                : AppRoutes.login,
+
+            routes: AppRoutes.routes,
+            onGenerateRoute: AppRoutes.onGenerateRoute,
+          );
+        },
+      ),
     );
   }
 }
