@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/ride.dart';
 import '../services/ride_service.dart';
+import '../services/ride_service_fixed.dart';
 
 class RideProvider with ChangeNotifier {
   final RideService _rideService = RideService();
+  final RideServiceFixed _rideServiceFixed = RideServiceFixed();
 
   List<Ride> _allRides = [];
   List<Ride> _myRides = [];
@@ -15,8 +17,25 @@ class RideProvider with ChangeNotifier {
   List<Ride> get searchResults => _searchResults;
   bool get isLoading => _isLoading;
 
+  /// ============================
+  /// CREATE RIDE WITH VEHICLE INFO
+  /// ============================
+  Future<String> createRideWithVehicle(Ride ride, String vehicleId) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      return await _rideServiceFixed.createRideWithVehicle(ride, vehicleId);
+    } catch (e) {
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   // ============================
-  // CREATE RIDE (🔥 FIRESTORE)
+  // CREATE RIDE ( FIRESTORE)
   // ============================
   Future<void> createRide(Ride ride) async {
     _isLoading = true;

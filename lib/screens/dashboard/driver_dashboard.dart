@@ -10,7 +10,7 @@ import '../../widgets/ride/ride_card.dart';
 import '../../config/theme.dart';
 import '../../models/user.dart';
 import '../../screens/driver/my_rides_screen.dart';
-import '../../screens/driver/simple_proposals_screen.dart';
+import '../../screens/vehicle/my_vehicles_screen.dart';
 
 class DriverDashboard extends StatefulWidget {
   const DriverDashboard({Key? key}) : super(key: key);
@@ -198,7 +198,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
       case 1:
         return const MyRidesScreen();
       case 2:
-        return const SimpleProposalsScreen();
+        return const MyVehiclesScreen();
       case 3:
         return _buildProfileTab();
       default:
@@ -499,7 +499,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
         }
 
         return Column(
-          children: rideProvider.myRides.take(3).map((ride) {
+          children: rideProvider.myRides.take(3).map<Widget>((ride) {
             return RideCard(
               ride: ride,
               showDriverInfo: false,
@@ -582,7 +582,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
                 }
 
                 return Column(
-                  children: rideProvider.myRides.map((ride) {
+                  children: rideProvider.myRides.map<Widget>((ride) {
                     return RideCard(
                       ride: ride,
                       showDriverInfo: false,
@@ -908,8 +908,8 @@ class _DriverDashboardState extends State<DriverDashboard> {
           label: 'Mes trajets',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.request_page),
-          label: 'Propositions',
+          icon: Icon(Icons.directions_car),
+          label: 'Véhicules',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.person),

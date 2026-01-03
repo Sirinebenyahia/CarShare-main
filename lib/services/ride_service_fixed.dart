@@ -1,9 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/ride.dart';
-import 'firestore_refs.dart';
 import '../services/user_vehicle_service.dart';
 
-class RideService {
+class RideServiceFixed {
   static final FirebaseFirestore _db = FirebaseFirestore.instance;
   static final CollectionReference _rides = _db.collection('rides');
 

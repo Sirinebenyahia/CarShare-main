@@ -32,16 +32,16 @@ class RideCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Driver Info
-              if (showDriverInfo) ...[
+              if (showDriverInfo && ride.vehicleInfo != null) ...[
                 Row(
                   children: [
                     CircleAvatar(
                       radius: 20,
                       backgroundColor: AppTheme.primaryBlue.withOpacity(0.1),
-                      child: ride.driverImageUrl != null
+                      child: ride.vehicleInfo!['driverInfo']?['avatar'] != null
                           ? null
                           : Text(
-                              ride.driverName.substring(0, 1).toUpperCase(),
+                              ride.vehicleInfo!['driverInfo']?['name']?.substring(0, 1).toUpperCase() ?? 'D',
                               style: const TextStyle(
                                 color: AppTheme.primaryBlue,
                                 fontWeight: FontWeight.bold,
@@ -54,26 +54,20 @@ class RideCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            ride.driverName,
+                            ride.vehicleInfo!['driverInfo']?['name'] ?? 'Conducteur',
                             style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 15,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
+                          const SizedBox(height: 4),
                           Row(
                             children: [
-                              const Icon(
-                                Icons.star,
-                                size: 14,
-                                color: Colors.amber,
-                              ),
+                              Icon(Icons.star, size: 14, color: Colors.amber),
                               const SizedBox(width: 4),
                               Text(
-                                ride.driverRating.toStringAsFixed(1),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
+                                '${ride.vehicleInfo!['driverInfo']?['rating']?.toStringAsFixed(1) ?? '0.0'}',
+                                style: TextStyle(color: Colors.grey[600]),
                               ),
                             ],
                           ),
@@ -82,40 +76,12 @@ class RideCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const Divider(height: 24),
+                const SizedBox(height: 12),
               ],
 
-              // Route
+              // Route Info
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    children: [
-                      Container(
-                        width: 10,
-                        height: 10,
-                        decoration: const BoxDecoration(
-                          color: AppTheme.successGreen,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      Container(
-                        width: 2,
-                        height: 40,
-                        color: Colors.grey[300],
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                      ),
-                      Container(
-                        width: 10,
-                        height: 10,
-                        decoration: const BoxDecoration(
-                          color: AppTheme.errorRed,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -124,118 +90,109 @@ class RideCard extends StatelessWidget {
                           ride.fromCity,
                           style: const TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 28),
                         Text(
-                          ride.toCity,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                          DateFormat('dd MMM yyyy', 'fr_FR').format(ride.departureDate),
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                        Text(
+                          DateFormat('HH:mm', 'fr_FR').format(ride.departureDate),
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  Text(
-                    '${ride.pricePerSeat.toStringAsFixed(2)} TND',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryBlue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.arrow_forward,
                       color: AppTheme.primaryBlue,
+                      size: 20,
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          ride.toCity,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '${ride.pricePerSeat} TND/place',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                        Text(
+                          '${ride.availableSeats} places',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
 
-              // Intermediate stops
-              if (ride.intermediateStops.isNotEmpty) ...[
+              // Vehicle Info
+              if (ride.vehicleInfo != null) ...[
                 const SizedBox(height: 12),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: ride.intermediateStops.map((stop) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.lightBlue.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: AppTheme.lightBlue.withOpacity(0.3),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.directions_car, size: 16, color: Colors.grey[600]),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${ride.vehicleInfo!['brand'] ?? 'N/A'} ${ride.vehicleInfo!['model'] ?? 'N/A'}',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12,
                         ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.location_on,
-                            size: 12,
-                            color: AppTheme.primaryBlue,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            stop,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: AppTheme.primaryBlue,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
+                    ],
+                  ),
                 ),
               ],
 
-              const SizedBox(height: 16),
-
-              // Details Row
-              Wrap(
-                spacing: 12,
-                runSpacing: 8,
+              // Status Chip
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  _buildInfoChip(
-                    icon: Icons.calendar_today,
-                    label: DateFormat('dd MMM').format(ride.departureDate),
-                  ),
-                  _buildInfoChip(
-                    icon: Icons.access_time,
-                    label: ride.departureTime,
-                  ),
-                  _buildInfoChip(
-                    icon: Icons.event_seat,
-                    label: '${ride.availableSeats} place${ride.availableSeats > 1 ? 's' : ''}',
-                  ),
-                  if (ride.vehicle != null)
-                    _buildInfoChip(
-                      icon: Icons.directions_car,
-                      label: '${ride.vehicle!.brand} ${ride.vehicle!.model}',
+                  Chip(
+                    label: Text(
+                      ride.status.name.toUpperCase(),
+                      style: const TextStyle(fontSize: 12, color: Colors.white),
                     ),
+                    backgroundColor: _getStatusColor(ride.status),
+                    padding: EdgeInsets.zero,
+                  ),
                 ],
               ),
-
-              // Preferences (compact)
-              if (_hasActivePreferences()) ...[
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: [
-                    if (ride.preferences.smokingAllowed)
-                      _buildPreferenceBadge(Icons.smoking_rooms, 'Fumeur'),
-                    if (ride.preferences.petsAllowed)
-                      _buildPreferenceBadge(Icons.pets, 'Animaux'),
-                    if (ride.preferences.luggageAllowed)
-                      _buildPreferenceBadge(Icons.luggage, 'Bagages'),
-                    if (ride.preferences.musicAllowed)
-                      _buildPreferenceBadge(Icons.music_note, 'Musique'),
-                  ],
-                ),
-              ],
             ],
           ),
         ),
@@ -243,60 +200,16 @@ class RideCard extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoChip({required IconData icon, required String label}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: AppTheme.greyText),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[700],
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPreferenceBadge(IconData icon, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppTheme.successGreen.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: AppTheme.successGreen),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 10,
-              color: AppTheme.successGreen,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  bool _hasActivePreferences() {
-    return ride.preferences.smokingAllowed ||
-        ride.preferences.petsAllowed ||
-        ride.preferences.luggageAllowed ||
-        ride.preferences.musicAllowed;
+  Color _getStatusColor(RideStatus status) {
+    switch (status) {
+      case RideStatus.active:
+        return AppTheme.successGreen;
+      case RideStatus.completed:
+        return AppTheme.primaryBlue;
+      case RideStatus.cancelled:
+        return AppTheme.errorRed;
+      default:
+        return Colors.grey;
+    }
   }
 }

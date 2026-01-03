@@ -22,8 +22,9 @@ import '../screens/profile/profile_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/profile/edit_profile_screen.dart';
 import '../screens/driver/my_rides_screen.dart';
-import '../screens/driver/my_proposals_screen.dart';
 import '../screens/driver/simple_proposals_screen.dart';
+import '../screens/vehicle/my_vehicles_screen.dart';
+import '../screens/vehicle/add_vehicle_screen.dart';
 // import '../screens/vehicle/my_vehicle_screen.dart'; // Commenté pour l'instant
 import '../screens/wallet/wallet_screen.dart';
 import '../screens/groups/groups_screen.dart';
@@ -72,6 +73,8 @@ class AppRoutes {
   static const String myRides = '/my-rides';
   static const String myProposals = '/my-proposals';
   static const String simpleProposals = '/simple-proposals';
+  static const String myVehicles = '/my-vehicles';
+  static const String addVehicle = '/add-vehicle';
   static const String myVehicle = '/my-vehicle';
   static const String wallet = '/wallet';
   static const String groups = '/groups';
@@ -98,8 +101,10 @@ class AppRoutes {
     profile: (_) => const ProfileScreen(),
     editProfile: (_) => const EditProfileScreen(),
     myRides: (_) => const MyRidesScreen(),
-    myProposals: (_) => const MyProposalsScreen(),
+    // myProposals: (_) => const MyProposalsScreen(), // Commenté pour l'instant
     simpleProposals: (_) => const SimpleProposalsScreen(),
+    myVehicles: (_) => const MyVehiclesScreen(),
+    addVehicle: (_) => const AddVehicleScreen(),
     // myVehicle: (_) => const MyVehicleScreen(), // Commenté pour l'instant
     wallet: (_) => const WalletScreen(),
     groups: (_) => const GroupsScreen(),

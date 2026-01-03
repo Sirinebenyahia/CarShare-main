@@ -56,16 +56,16 @@ class VehicleService {
   // =========================
   // Récupérer les véhicules d'un utilisateur
   // =========================
-  Stream<List<Vehicle>> vehiclesStreamByOwner(String ownerId) {
-    return _vehicles
+  Future<List<Vehicle>> getMyVehicles(String ownerId) async {
+    final query = await _vehicles
         .where('ownerId', isEqualTo: ownerId)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) {
-              final data = doc.data();
-              data['id'] = doc.id; // ajouter l'id Firestore au model
-              return Vehicle.fromJson(data);
-            }).toList());
+        .get();
+
+    return query.docs.map((doc) {
+      final data = doc.data();
+      data['id'] = doc.id; // ajouter l'id Firestore au model
+      return Vehicle.fromJson(data);
+    }).toList();
   }
 
   // =========================
