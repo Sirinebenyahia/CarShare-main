@@ -1,179 +1,368 @@
-# CarShare Tunisie
+# 🚗 CarShare Tunisie
 
- Application mobile de covoiturage (Flutter + Firebase) :
+Application mobile de covoiturage moderne pour la Tunisie, développée avec **Flutter + Firebase**.
 
- - Recherche de trajets
- - Publication de trajets (côté chauffeur)
- - Réservation + paiement (MVP)
- - Historique / trajets à venir
- - Profil utilisateur + vérification CIN (upload Firebase Storage)
+## ✨ Fonctionnalités principales
 
-## Fonctionnalités
+### 🔐 Authentification & Sécurité
+- **Inscription/Connexion** par email et mot de passe (Firebase Auth)
+- **Vérification d'identité** avec upload CIN/Permis de conduire
+- **Rôles flexibles** : Passager ou Conducteur (switch possible)
+- **Sécurité renforcée** : contact d'urgence, signalement de problèmes
 
-### Authentification
- - Connexion / Inscription par **email + mot de passe** (Firebase Auth)
- - Redirection automatique vers `/home` si connecté, sinon `/welcome`
+### 🚗 Trajets & Réservations
+- **Recherche intelligente** de trajets (départ → destination)
+- **Filtres avancés** : date, prix max, places disponibles, préférences
+- **Publication de trajets** (côté conducteur) avec gestion des véhicules
+- **Réservation en 1-clic** avec paiement intégré
+- **Historique complet** : trajets à venir et passés
 
-### Trajets (rides)
- - Liste des trajets disponibles depuis Firestore (`rides`)
- - Recherche simple `from/to` via écran Résultats
- - Détails d’un trajet
- - Publication d’un trajet (création d’un doc `rides`)
+### 💰 Portefeuille & Paiements
+- **Portefeuille virtuel** avec recharge en ligne
+- **Transactions détaillées** : recharge, paiement, gains, remboursements
+- **Méthodes de paiement** multiples (Carte, Orange Money, Ooredoo Money, Espèces)
 
-### Réservations (bookings)
- - Écran Paiement (MVP) : choix de méthode + création d’un doc `bookings`
- - Trajets à venir : liste des bookings du user
- - Historique : liste des bookings du user
- - Détails réservation : affiche booking + trajet associé
+### 👥 Social & Communication
+- **Groupes de covoiturage** : publics ou privés
+- **Chat intégré** : discussions de groupe et chat trajet
+- **Système d'avis** : évaluation des conducteurs et passagers
+- **Notifications push** : bookings, acceptations, messages
 
-### Vérification CIN
- - Écran Vérification CIN
- - Upload du fichier CIN (JPG/PNG/PDF) vers Firebase Storage
- - Sauvegarde des métadonnées dans `users/{uid}`
+### 🌍 Internationalisation
+- **Multilingue** : Français, Arabe, Anglais
+- **Interface adaptative** : RTL/LTR selon la langue
+- **Localisation complète** : dates, devises, formats
 
-## Stack technique
- - **Flutter** / **Dart**
- - Navigation : **go_router**
- - Firebase :
-   - **firebase_core**
-   - **firebase_auth**
-   - **cloud_firestore**
-   - **firebase_storage**
- - Upload fichier : **file_picker**
+## 🛠 Stack technique
 
-## Écrans & routes
- Les routes sont définies dans `lib/router/app_router.dart`.
+### Frontend (Flutter)
+- **Framework** : Flutter 3.x avec Dart
+- **State Management** : Provider
+- **Navigation** : MaterialApp avec routes nommées
+- **UI/UX** : Material Design 3, thèmes personnalisés
+- **Internationalisation** : AppLocalizations custom
 
- - `/welcome`
-   - Connexion / Inscription
- - `/verification`
-   - Upload CIN + sauvegarde dans Firestore
- - `/home`
-   - Recherche (form) + liste des trajets disponibles
- - `/search?from=...&to=...`
-   - Résultats de recherche
- - `/ride/:rideId`
-   - Détails trajet + bouton Réserver
- - `/payment/:rideId`
-   - Choix méthode paiement + création booking
- - `/booking/:bookingId`
-   - Détails réservation + lien vers trajet
- - `/publish`
-   - Publier un trajet (création ride)
- - `/upcoming-rides`
-   - Trajets à venir (bookings)
- - `/history`
-   - Historique (bookings)
- - `/profile`
-   - Profil + statut CIN + actions
+### Backend (Firebase)
+- **Authentication** : Firebase Auth (email/password)
+- **Database** : Cloud Firestore (NoSQL)
+- **Storage** : Firebase Storage (images, documents)
+- **Cloud Functions** : FCM notifications, triggers
+- **Hosting** : Firebase Hosting (optionnel)
 
-## Collections Firestore (schéma MVP)
+### Packages principaux
+```yaml
+dependencies:
+  firebase_core: latest
+  firebase_auth: latest
+  cloud_firestore: latest
+  firebase_storage: latest
+  firebase_messaging: latest
+  provider: latest
+  file_picker: latest
+  image_picker: latest
+```
 
-### `users/{uid}`
- Champs utilisés :
- - `uid`: string
- - `email`: string
- - `createdAt`: timestamp
- - `cinNumber`: string (optionnel)
- - `cinFileUrl`: string (optionnel)
- - `cinUpdatedAt`: timestamp (optionnel)
+## 📱 Architecture & Structure
 
- Création/seed : `RideService.ensureUserDoc()`.
+```
+lib/
+├── main.dart                 # Point d'entrée, init Firebase
+├── config/
+│   ├── theme.dart           # Thème de l'application
+│   └── routes.dart          # Routes et navigation
+├── l10n/
+│   └── app_localizations.dart # Internationalisation
+├── providers/
+│   ├── auth_provider.dart   # État authentification
+│   ├── booking_provider.dart # Gestion réservations
+│   └── locale_provider.dart  # Gestion langue
+├── services/
+│   ├── fcm_service.dart     # Notifications push
+│   ├── auth_service.dart    # Services Firebase Auth
+│   └── storage_service.dart # Upload fichiers
+├── screens/
+│   ├── auth/               # Écrans authentification
+│   ├── dashboard/          # Tableau de bord
+│   ├── rides/              # Gestion trajets
+│   ├── booking/            # Réservations
+│   ├── wallet/             # Portefeuille
+│   ├── groups/             # Groupes
+│   └── profile/            # Profil utilisateur
+└── widgets/                # Composants réutilisables
+```
 
-### `rides/{rideId}`
- Champs utilisés :
- - `from`: string
- - `to`: string
- - `priceTnd`: number
- - `womenOnly`: bool
- - `seatsAvailable`: number
- - `driverName`: string
- - `rating`: number
- - `departureTime`: timestamp
- - `createdAt`: timestamp
- - `driverId`: string (uid)
+## 🗄 Base de données (Firestore)
 
- Création : `RideService.createRide()`.
+### Collections principales
 
-### `bookings/{bookingId}`
- Champs utilisés :
- - `rideId`: string
- - `userId`: string (uid)
- - `paymentMethod`: string (`card`, `orange_money`, `ooredoo_money`, `cash`)
- - `status`: string (par défaut `confirmed`)
- - `createdAt`: timestamp
+#### `users/{uid}`
+```dart
+{
+  'uid': string,
+  'email': string,
+  'fullName': string,
+  'phone': string,
+  'role': 'passenger' | 'driver',
+  'createdAt': Timestamp,
+  'isVerified': bool,
+  'cinUrl': string,        // URL CIN uploadé
+  'licenseUrl': string,    // URL permis uploadé
+  'fcmToken': string,      // Token notifications
+  'walletBalance': double,
+  'rating': double,
+  'memberSince': Timestamp,
+}
+```
 
- Création : `RideService.createBooking()`.
+#### `rides/{rideId}`
+```dart
+{
+  'driverId': string,
+  'driverName': string,
+  'departure': string,
+  'destination': string,
+  'departureDate': Timestamp,
+  'departureTime': string,
+  'pricePerSeat': double,
+  'availableSeats': int,
+  'totalSeats': int,
+  'vehicle': {
+    'brand': string,
+    'model': string,
+    'color': string,
+    'licensePlate': string,
+  },
+  'preferences': {
+    'smokingAllowed': bool,
+    'petsAllowed': bool,
+    'luggageAllowed': bool,
+    'musicAllowed': bool,
+    'chattingAllowed': bool,
+  },
+  'status': 'active' | 'completed' | 'cancelled',
+  'createdAt': Timestamp,
+}
+```
 
-## Storage (CIN)
- Chemin d’upload :
- - `users/{uid}/cin/{fileName}`
+#### `bookings/{bookingId}`
+```dart
+{
+  'rideId': string,
+  'userId': string,
+  'driverId': string,
+  'seatsBooked': int,
+  'totalPrice': double,
+  'paymentMethod': 'card' | 'orange_money' | 'ooredoo_money' | 'cash',
+  'status': 'pending' | 'confirmed' | 'cancelled' | 'completed',
+  'bookingDate': Timestamp,
+  'paymentStatus': 'paid' | 'pending' | 'refunded',
+}
+```
 
- Implémentation : `lib/services/storage_service.dart`.
+#### `groups/{groupId}`
+```dart
+{
+  'name': string,
+  'description': string,
+  'type': 'public' | 'private',
+  'creatorId': string,
+  'memberIds': List<string>,
+  'createdAt': Timestamp,
+  'memberCount': int,
+}
+```
 
-## Structure du projet (dossiers clés)
- - `lib/main.dart` : init Firebase + router
- - `lib/firebase_options.dart` : config Firebase générée
- - `lib/router/` : configuration go_router
- - `lib/screens/` : écrans UI
- - `lib/services/` : Auth / Firestore / Storage
- - `lib/widgets/` : composants (BottomNav)
+## 🔧 Configuration requise
 
-## Pré-requis
- - Flutter SDK installé (`flutter doctor` OK)
- - Android Studio + Android SDK
- - Compte Firebase + projet Firebase configuré
+### Prérequis
+- **Flutter SDK** 3.0+ (`flutter doctor`)
+- **Android Studio** avec Android SDK
+- **Node.js** 16+ (pour Cloud Functions)
+- **Compte Firebase** avec projet configuré
 
-## Configuration Firebase
+### Configuration Firebase
 
-### Android
- - Package name : `com.carshare.tunisie.carshare_tunisie`
- - Fichier requis : `android/app/google-services.json`
- - Activer Email/Password : Firebase Console → Authentication → Sign-in method
- - Ajouter SHA-1/SHA-256 (debug/release) : Firebase Console → Project settings → Your apps (Android)
-
-### iOS
- - Config via FlutterFire CLI (génère `firebase_options.dart`)
- - Nécessite macOS + Xcode pour builder iOS
-
-## Lancer le projet
-
-### Installer les dépendances
+#### 1. Créer le projet Firebase
 ```bash
+# Installer Firebase CLI
+npm install -g firebase-tools
+
+# Se connecter
+firebase login
+
+# Initialiser le projet
+firebase init
+```
+
+#### 2. Configuration Android
+- **Package Name** : `com.carshare.tunisie.carshare_tunisie`
+- **Fichier requis** : `android/app/google-services.json`
+- **Activer Authentication** → Email/Password
+- **Ajouter SHA-1/SHA-256** dans Project Settings
+
+#### 3. Configuration iOS
+- Générer `firebase_options.dart` avec FlutterFire CLI
+- Nécessite macOS + Xcode
+
+#### 4. Cloud Functions
+```bash
+cd functions
+npm install
+firebase deploy --only functions
+```
+
+## 🚀 Lancement du projet
+
+### Installation des dépendances
+```bash
+# Flutter dependencies
 flutter pub get
+
+# Cloud Functions dependencies
+cd functions && npm install
 ```
 
-### Analyse statique
+### Développement local
 ```bash
-flutter analyze
-```
-
-### Run Android
-```bash
+# Lancer l'app Flutter
 flutter run
+
+# Lancer les Cloud Functions en local
+firebase emulators:start
 ```
 
-### Release (Android)
+### Build pour production
 ```bash
-flutter run --release
+# Android APK
+flutter build apk --release
+
+# Android App Bundle
+flutter build appbundle --release
+
+# iOS (nécessite macOS)
+flutter build ios --release
 ```
 
-## Troubleshooting
+### Déploiement
+```bash
+# Déployer les Cloud Functions
+firebase deploy --only functions
 
-### Inscription Firebase échoue (ex: `CONFIGURATION_NOT_FOUND`)
- - Vérifier que l’émulateur/appareil a **Internet**
- - Vérifier SHA-256 ajouté sur la bonne app Android dans Firebase
- - Vérifier que `google-services.json` correspond au bon `project_id` et `package_name`
+# Déployer l'hébergement (optionnel)
+firebase deploy --only hosting
+```
 
-### Build Android échoue avec “Espace insuffisant sur le disque”
- - Libérer de l’espace sur le disque (Gradle peut consommer plusieurs Go)
- - Relancer :
-   - `flutter clean`
-   - `flutter pub get`
+## 🌐 Internationalisation
 
-## Roadmap (idées)
- - Filtres recherche (date, prix max, places, women only)
- - Chat driver/passager
- - Gestion des places (décrément sur booking)
- - Statuts booking (pending/cancelled/completed)
- - Validation CIN côté admin
+### Langues supportées
+- **Français** (par défaut)
+- **العربية** (Arabe)
+- **English** (Anglais)
+
+### Ajouter une nouvelle langue
+1. Modifier `lib/l10n/app_localizations.dart`
+2. Ajouter les traductions dans `_localizedValues`
+3. Mettre à jour `isSupported` dans `_AppLocalizationsDelegate`
+
+### Utilisation dans le code
+```dart
+final t = AppLocalizations.of(context);
+Text(t.t('welcome_message'))
+```
+
+## 🔔 Notifications Push (FCM)
+
+### Types de notifications
+- **Nouvelle réservation** (pour le conducteur)
+- **Réservation acceptée** (pour le passager)
+- **Messages de groupe**
+- **Messages de chat trajet**
+- **Demande de trajet acceptée**
+
+### Configuration
+1. Activer **Cloud Messaging** dans Firebase Console
+2. Configurer les **Cloud Functions** pour les triggers
+3. Le service `FcmService` gère automatiquement :
+   - Permission utilisateur
+   - Token registration
+   - Handlers foreground/background
+   - Navigation sur notification tap
+
+## 🎨 Personnalisation
+
+### Thème de l'application
+Modifier `lib/config/theme.dart` :
+```dart
+static const Color primaryBlue = Color(0xFF1976D2);
+static const Color warningOrange = Color(0xFFFF9800);
+static const Color successGreen = Color(0xFF4CAF50);
+static const Color errorRed = Color(0xFFF44336);
+```
+
+### Icônes et Splash
+```bash
+# Générer les icônes
+flutter pub run flutter_launcher_icons:main
+
+# Générer le splash screen
+flutter pub run flutter_native_splash:create
+```
+
+## 🐛 Dépannage
+
+### Problèmes courants
+
+#### Firebase Auth ne fonctionne pas
+- **Vérifier Internet** sur l'émulateur/appareil
+- **Ajouter SHA-256** dans Firebase Console
+- **Vérifier `google-services.json`** (project_id, package_name)
+
+#### Build Android échoue
+```bash
+# Nettoyer le projet
+flutter clean
+flutter pub get
+
+# Augmenter la mémoire Gradle
+export GRADLE_OPTS="-Xmx4g -XX:MaxPermSize=512m"
+```
+
+#### Notifications push non reçues
+- **Vérifier permission** notification sur l'appareil
+- **Vérifier FCM token** dans Firestore
+- **Déployer les Cloud Functions**
+
+## 🗺 Roadmap
+
+### Fonctionnalités à venir
+- [ ] **Carte interactive** avec itinéraire en temps réel
+- [ ] ** Paiement en ligne** intégré (Stripe, PayPal)
+- [ ] **Système de points** et programme de fidélité
+- [ ] **Modération** automatique du contenu
+- [ ] **API REST** pour partenaires externes
+- [ ] **Version web** (Flutter Web)
+
+### Améliorations techniques
+- [ ] **Tests unitaires** et integration tests
+- [ ] **CI/CD** avec GitHub Actions
+- [ ] **Monitoring** et analytics (Firebase Analytics)
+- [ ] **Offline mode** avec cache local
+
+## 📝 License
+
+Ce projet est sous license **MIT** - voir le fichier [LICENSE](LICENSE) pour plus de détails.
+
+## 👥 Contributeurs
+
+- **[Sirine Ben Yahia](https://github.com/Sirinebenyahia)** - Lead Developer
+- **[Eya](https://github.com/eya)** - Frontend Developer
+
+## 📞 Contact
+
+- **Email** : contact@carshare.tn
+- **Site web** : https://carshare.tn
+- **GitHub** : https://github.com/Sirinebenyahia/CarShare-main
+
+---
+
+⭐ **N'oubliez pas de mettre une étoile si ce projet vous aide !**
