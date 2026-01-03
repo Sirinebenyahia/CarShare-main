@@ -454,7 +454,7 @@ class _PassengerDashboardState extends State<PassengerDashboard> {
         }
 
         return Column(
-          children: rideProvider.allRides.take(3).map((ride) {
+          children: rideProvider.allRides.take(3).map<Widget>((ride) {
             return RideCard(
               ride: ride,
               onTap: () {
@@ -547,7 +547,7 @@ class _PassengerDashboardState extends State<PassengerDashboard> {
                 }
 
                 return Column(
-                  children: rideProvider.allRides.map((ride) {
+                  children: rideProvider.allRides.map<Widget>((ride) {
                     return RideCard(
                       ride: ride,
                       onTap: () {

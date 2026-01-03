@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../models/vehicle.dart';
+import '../services/vehicle_service.dart';
 
 class VehicleProvider with ChangeNotifier {
+  final VehicleService _service = VehicleService();
+  
   List<Vehicle> _myVehicles = [];
   bool _isLoading = false;
 
@@ -13,89 +16,61 @@ class VehicleProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      await Future.delayed(const Duration(seconds: 1));
-      
-      // Mock vehicles
-      _myVehicles = [
-        Vehicle(
-          id: 'v1',
-          ownerId: ownerId,
-          brand: 'Peugeot',
-          model: '308',
-          color: 'Gris',
-          licensePlate: '123 TU 4567',
-          year: 2020,
-          seats: 4,
-          createdAt: DateTime.now().subtract(const Duration(days: 90)),
-          updatedAt: DateTime.now(),
-        ),
-      ];
+      _myVehicles = await _service.getMyVehicles(ownerId);
     } catch (e) {
-      // Handle error
+      debugPrint('Error fetching vehicles: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> addVehicle({
-    required String ownerId,
-    required String brand,
-    required String model,
-    required String color,
-    required String licensePlate,
-    required int year,
-    required int seats,
-    String? imageUrl,
-  }) async {
+  Future<void> addVehicle(Vehicle vehicle) async {
     try {
-      await Future.delayed(const Duration(seconds: 1));
-
-      final newVehicle = Vehicle(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        ownerId: ownerId,
-        brand: brand,
-        model: model,
-        color: color,
-        licensePlate: licensePlate,
-        year: year,
-        seats: seats,
-        imageUrl: imageUrl,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
+      await _service.addVehicle(
+        ownerId: vehicle.ownerId,
+        brand: vehicle.brand,
+        model: vehicle.model,
+        color: vehicle.color,
+        licensePlate: vehicle.licensePlate,
+        year: vehicle.year,
+        seats: vehicle.seats,
+        imageUrl: vehicle.imageUrl,
       );
-
-      _myVehicles.add(newVehicle);
-      notifyListeners();
+      
+      // Rafraîchir la liste
+      await fetchMyVehicles(vehicle.ownerId);
     } catch (e) {
+      debugPrint('Error adding vehicle: $e');
       rethrow;
     }
   }
 
   Future<void> updateVehicle(String vehicleId, Vehicle updatedVehicle) async {
     try {
-      await Future.delayed(const Duration(seconds: 1));
-
+      await _service.updateVehicle(vehicleId, updatedVehicle);
+      
+      // Rafraîchir la liste
       final index = _myVehicles.indexWhere((v) => v.id == vehicleId);
       if (index != -1) {
-        _myVehicles[index] = updatedVehicle.copyWith(
-          updatedAt: DateTime.now(),
-        );
+        _myVehicles[index] = updatedVehicle.copyWith(updatedAt: DateTime.now());
+        notifyListeners();
       }
-
-      notifyListeners();
     } catch (e) {
+      debugPrint('Error updating vehicle: $e');
       rethrow;
     }
   }
 
   Future<void> deleteVehicle(String vehicleId) async {
     try {
-      await Future.delayed(const Duration(milliseconds: 500));
-
+      await _service.deleteVehicle(vehicleId);
+      
+      // Retirer de la liste locale
       _myVehicles.removeWhere((v) => v.id == vehicleId);
       notifyListeners();
     } catch (e) {
+      debugPrint('Error deleting vehicle: $e');
       rethrow;
     }
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../../models/ride.dart';
 import '../../providers/booking_provider.dart';
 import '../../providers/wallet_provider.dart';
@@ -270,10 +271,10 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                   CircleAvatar(
                     radius: 40,
                     backgroundColor: AppTheme.primaryBlue.withOpacity(0.1),
-                    child: widget.ride.driverImageUrl != null
+                    child: widget.ride.vehicleInfo?['driverInfo']?['avatar'] != null
                         ? null
                         : Text(
-                            widget.ride.driverName.substring(0, 1).toUpperCase(),
+                            widget.ride.vehicleInfo?['driverInfo']?['name']?.substring(0, 1).toUpperCase() ?? 'D',
                             style: const TextStyle(
                               fontSize: 32,
                               fontWeight: FontWeight.bold,
@@ -287,7 +288,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget.ride.driverName,
+                          widget.ride.vehicleInfo?['driverInfo']?['name'] ?? 'Conducteur',
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -299,14 +300,14 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                             const Icon(Icons.star, color: Colors.amber, size: 20),
                             const SizedBox(width: 4),
                             Text(
-                              widget.ride.driverRating.toStringAsFixed(1),
+                              (widget.ride.vehicleInfo?['driverInfo']?['rating'] ?? 0.0).toStringAsFixed(1),
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                             const SizedBox(width: 8),
-                            if (widget.ride.driverRating >= 4.5)
+                            if ((widget.ride.vehicleInfo?['driverInfo']?['rating'] ?? 0.0) >= 4.5)
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 8,
@@ -400,19 +401,20 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                       ),
                     ],
                   ),
-                  if (widget.ride.intermediateStops.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: widget.ride.intermediateStops.map((stop) {
-                        return Chip(
-                          label: Text(stop),
-                          avatar: const Icon(Icons.location_on, size: 16),
-                        );
-                      }).toList(),
-                    ),
-                  ],
+                  // Intermediate stops are not supported in current model
+                  // if (widget.ride.intermediateStops.isNotEmpty) ...[
+                  //   const SizedBox(height: 12),
+                  //   Wrap(
+                  //     spacing: 8,
+                  //     runSpacing: 8,
+                  //     children: widget.ride.intermediateStops.map((stop) {
+                  //       return Chip(
+                  //         label: Text(stop),
+                  //         avatar: const Icon(Icons.location_on, size: 16),
+                  //       );
+                  //     }).toList(),
+                  //   ),
+                  // ],
                 ],
               ),
             ),
@@ -434,7 +436,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                   _buildInfoRow(
                     Icons.access_time,
                     'Heure',
-                    widget.ride.departureTime,
+                    DateFormat('HH:mm', 'fr_FR').format(widget.ride.departureDate),
                   ),
                   const SizedBox(height: 16),
                   _buildInfoRow(
@@ -455,7 +457,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
             const Divider(height: 1),
 
             // Vehicle Info
-            if (widget.ride.vehicle != null) ...[
+            if (widget.ride.vehicleInfo != null) ...[
               Container(
                 padding: const EdgeInsets.all(20),
                 color: Colors.white,
@@ -482,14 +484,14 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '${widget.ride.vehicle!.brand} ${widget.ride.vehicle!.model}',
+                              '${widget.ride.vehicleInfo!['brand'] ?? 'N/A'} ${widget.ride.vehicleInfo!['model'] ?? 'N/A'}',
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                             Text(
-                              '${widget.ride.vehicle!.color} • ${widget.ride.vehicle!.year}',
+                              '${widget.ride.vehicleInfo!['color'] ?? 'N/A'} • ${widget.ride.vehicleInfo!['year'] ?? 'N/A'}',
                               style: TextStyle(
                                 color: Colors.grey[600],
                               ),
@@ -525,27 +527,27 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                     children: [
                       _buildPreferenceChip(
                         'Fumeur',
-                        widget.ride.preferences.smokingAllowed,
+                        widget.ride.preferences?.smokingAllowed ?? false,
                         Icons.smoking_rooms,
                       ),
                       _buildPreferenceChip(
                         'Animaux',
-                        widget.ride.preferences.petsAllowed,
+                        widget.ride.preferences?.petsAllowed ?? false,
                         Icons.pets,
                       ),
                       _buildPreferenceChip(
                         'Bagages',
-                        widget.ride.preferences.luggageAllowed,
+                        widget.ride.preferences?.luggageAllowed ?? false,
                         Icons.luggage,
                       ),
                       _buildPreferenceChip(
                         'Musique',
-                        widget.ride.preferences.musicAllowed,
+                        widget.ride.preferences?.musicAllowed ?? false,
                         Icons.music_note,
                       ),
                       _buildPreferenceChip(
                         'Discussion',
-                        widget.ride.preferences.chattingAllowed,
+                        widget.ride.preferences?.chattingAllowed ?? false,
                         Icons.chat,
                       ),
                     ],

@@ -9,6 +9,8 @@ import '../../providers/ride_request_provider.dart';
 import '../../widgets/ride/ride_card.dart';
 import '../../config/theme.dart';
 import '../../models/user.dart';
+import '../../screens/driver/my_rides_screen.dart';
+import '../../screens/vehicle/my_vehicles_screen.dart';
 
 class DriverDashboard extends StatefulWidget {
   const DriverDashboard({Key? key}) : super(key: key);
@@ -36,6 +38,8 @@ class _DriverDashboardState extends State<DriverDashboard> {
       await context.read<VehicleProvider>().fetchMyVehicles(userId);
       await context.read<BookingProvider>().fetchAcceptedRequests(userId);
       await context.read<RideRequestProvider>().fetchAllRequests();
+      // Désactiver le stream des propositions pour éviter le blocage
+      // context.read<RideRequestProvider>().listenToMyProposals(userId);
     }
   }
 
@@ -192,9 +196,9 @@ class _DriverDashboardState extends State<DriverDashboard> {
       case 0:
         return _buildHomeTab();
       case 1:
-        return _buildRidesTab();
+        return const MyRidesScreen();
       case 2:
-        return _buildRequestsTab();
+        return const MyVehiclesScreen();
       case 3:
         return _buildProfileTab();
       default:
@@ -495,7 +499,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
         }
 
         return Column(
-          children: rideProvider.myRides.take(3).map((ride) {
+          children: rideProvider.myRides.take(3).map<Widget>((ride) {
             return RideCard(
               ride: ride,
               showDriverInfo: false,
@@ -578,7 +582,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
                 }
 
                 return Column(
-                  children: rideProvider.myRides.map((ride) {
+                  children: rideProvider.myRides.map<Widget>((ride) {
                     return RideCard(
                       ride: ride,
                       showDriverInfo: false,
@@ -901,11 +905,11 @@ class _DriverDashboardState extends State<DriverDashboard> {
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.directions_car),
-          label: 'Trajets',
+          label: 'Mes trajets',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.request_page),
-          label: 'Demandes',
+          icon: Icon(Icons.directions_car),
+          label: 'Véhicules',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.person),

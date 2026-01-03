@@ -3,9 +3,12 @@ import 'package:provider/provider.dart';
 import '../../providers/ride_provider.dart';
 import '../../providers/vehicle_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../models/ride.dart';
+import '../../models/vehicle.dart';
+import '../../config/theme.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/custom_text_field.dart';
-import '../../config/theme.dart';
+import 'package:intl/intl.dart';
 import '../../config/constants.dart';
 import '../../models/ride.dart';
 
@@ -18,27 +21,42 @@ class CreateRideScreen extends StatefulWidget {
 
 class _CreateRideScreenState extends State<CreateRideScreen> {
   final _formKey = GlobalKey<FormState>();
-  String? _fromCity;
-  String? _toCity;
-  DateTime? _departureDate;
-  TimeOfDay? _departureTime;
-  final _seatsController = TextEditingController(text: '3');
-  final _priceController = TextEditingController(text: '20');
-  String? _selectedVehicleId;
   
-  // Preferences
-  bool _smokingAllowed = false;
-  bool _petsAllowed = false;
+  final _fromCityController = TextEditingController();
+  final _toCityController = TextEditingController();
+  final _departureDateController = TextEditingController();
+  final _departureTimeController = TextEditingController(text: '08:00');
+  final _priceController = TextEditingController();
+  final _seatsController = TextEditingController(text: '4');
+  final _descriptionController = TextEditingController();
+  
+  String? _selectedVehicleId;
+  Vehicle? _selectedVehicle;
+  List<Vehicle> _myVehicles = [];
+  
+  bool _isLoading = false;
+  bool _isExpanded = false;
   bool _luggageAllowed = true;
   bool _musicAllowed = true;
   bool _chattingAllowed = true;
+  bool _smokingAllowed = true;
+  bool _petsAllowed = true;
+  
+  DateTime? _departureDate;
+  TimeOfDay? _departureTime;
+  String? _fromCity;
+  String? _toCity;
 
   @override
   void initState() {
     super.initState();
+    _loadVehicles();
+  }
+
+  Future<void> _loadVehicles() async {
     final userId = context.read<AuthProvider>().currentUser?.id;
     if (userId != null) {
-      context.read<VehicleProvider>().fetchMyVehicles(userId);
+      await context.read<VehicleProvider>().fetchMyVehicles(userId);
     }
   }
 
@@ -96,7 +114,7 @@ class _CreateRideScreenState extends State<CreateRideScreen> {
   Future<void> _handleCreateRide() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_fromCity == null || _toCity == null) {
+    if (_fromCityController.text.trim().isEmpty || _toCityController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Veuillez sélectionner les villes'),
@@ -119,33 +137,39 @@ class _CreateRideScreenState extends State<CreateRideScreen> {
     final authProvider = context.read<AuthProvider>();
     final user = authProvider.currentUser!;
 
-    final ride = Ride(
-      id: '',
-      driverId: user.id,
-      driverName: user.fullName,
-      driverImageUrl: user.profileImageUrl,
-      driverRating: user.rating,
-      fromCity: _fromCity!,
-      toCity: _toCity!,
-      departureDate: _departureDate!,
-      departureTime: '${_departureTime!.hour.toString().padLeft(2, '0')}:${_departureTime!.minute.toString().padLeft(2, '0')}',
-      availableSeats: int.parse(_seatsController.text),
-      totalSeats: int.parse(_seatsController.text),
-      pricePerSeat: double.parse(_priceController.text),
-      vehicleId: _selectedVehicleId,
-      preferences: RidePreferences(
-        smokingAllowed: _smokingAllowed,
-        petsAllowed: _petsAllowed,
-        luggageAllowed: _luggageAllowed,
-        musicAllowed: _musicAllowed,
-        chattingAllowed: _chattingAllowed,
-      ),
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
 
     try {
-      await context.read<RideProvider>().createRide(ride);
+      final userId = context.read<AuthProvider>().currentUser?.id;
+      if (userId == null) return;
+
+      // Créer le ride avec les infos du véhicule
+      final rideId = await context.read<RideProvider>().createRideWithVehicle(
+        Ride(
+          id: '',
+          driverId: userId,
+          fromCity: _fromCityController.text.trim(),
+          toCity: _toCityController.text.trim(),
+          departureDate: DateTime(
+            _departureDate!.year,
+            _departureDate!.month,
+            _departureDate!.day,
+            _departureTime!.hour,
+            _departureTime!.minute,
+          ),
+          pricePerSeat: double.parse(_priceController.text),
+          availableSeats: int.parse(_seatsController.text),
+          description: _descriptionController.text.trim(),
+          preferences: RidePreferences(
+            luggageAllowed: _luggageAllowed,
+            musicAllowed: _musicAllowed,
+            chattingAllowed: _chattingAllowed,
+          ),
+          status: RideStatus.active,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+        _selectedVehicleId!, // Utiliser le véhicule sélectionné
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -165,6 +189,10 @@ class _CreateRideScreenState extends State<CreateRideScreen> {
           ),
         );
       }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -183,45 +211,29 @@ class _CreateRideScreenState extends State<CreateRideScreen> {
             _buildSectionTitle('Itinéraire'),
             const SizedBox(height: 12),
 
-            DropdownButtonFormField<String>(
-              value: _fromCity,
-              decoration: InputDecoration(
-                labelText: 'Ville de départ',
-                prefixIcon: const Icon(Icons.location_on),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              items: AppConstants.tunisianCities.map((city) {
-                return DropdownMenuItem(
-                  value: city,
-                  child: Text(city),
-                );
-              }).toList(),
-              onChanged: (value) => setState(() => _fromCity = value),
-              validator: (value) =>
-                  value == null ? 'Ville de départ requise' : null,
+            CustomTextField(
+              controller: _fromCityController,
+              label: 'Ville de départ',
+              prefixIcon: Icons.location_on,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Ville de départ requise';
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 16),
 
-            DropdownButtonFormField<String>(
-              value: _toCity,
-              decoration: InputDecoration(
-                labelText: 'Ville d\'arrivée',
-                prefixIcon: const Icon(Icons.location_on_outlined),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              items: AppConstants.tunisianCities.map((city) {
-                return DropdownMenuItem(
-                  value: city,
-                  child: Text(city),
-                );
-              }).toList(),
-              onChanged: (value) => setState(() => _toCity = value),
-              validator: (value) =>
-                  value == null ? 'Ville d\'arrivée requise' : null,
+            CustomTextField(
+              controller: _toCityController,
+              label: 'Ville d\'arrivée',
+              prefixIcon: Icons.location_on_outlined,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Ville d\'arrivée requise';
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 24),
 

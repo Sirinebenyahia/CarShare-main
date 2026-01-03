@@ -37,15 +37,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     try {
+      // Nettoyer les données avant de les passer
+      final email = _emailController.text.trim();
+      final fullName = _fullNameController.text.trim();
+      final phoneNumber = _phoneController.text.trim();
+      final password = _passwordController.text;
+
       // First register, then navigate to role selection
       Navigator.pushNamed(
         context,
         '/role-selection',
         arguments: {
-          'email': _emailController.text.trim(),
-          'password': _passwordController.text,
-          'fullName': _fullNameController.text.trim(),
-          'phoneNumber': _phoneController.text.trim(),
+          'email': email,
+          'password': password,
+          'fullName': fullName,
+          'phoneNumber': phoneNumber,
         },
       );
     } catch (e) {
@@ -127,8 +133,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Veuillez entrer votre email';
                     }
-                    if (!value.contains('@')) {
-                      return 'Email invalide';
+                    // Validation email plus robuste
+                    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+                    if (!emailRegex.hasMatch(value.trim())) {
+                      return 'Email invalide (ex: utilisateur@domaine.com)';
                     }
                     return null;
                   },

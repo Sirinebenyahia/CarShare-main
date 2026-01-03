@@ -84,4 +84,7 @@ class Vehicle {
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
+
+  String get displayName => '$brand $model';
+  String get fullInfo => '$brand $model ($year) - $color';
 }

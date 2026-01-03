@@ -45,76 +45,54 @@ class RidePreferences {
 class Ride {
   final String id;
   final String driverId;
-  final String driverName;
-  final String? driverImageUrl;
-  final double driverRating;
   final String fromCity;
   final String toCity;
   final DateTime departureDate;
-  final String departureTime;
-  final int availableSeats;
-  final int totalSeats;
   final double pricePerSeat;
-  final String? vehicleId;
-  final Vehicle? vehicle;
-  final List<String> intermediateStops;
-  final RidePreferences preferences;
+  final int availableSeats;
+  final String? description;
+  final RidePreferences? preferences;
   final RideStatus status;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final Map<String, dynamic>? vehicleInfo;
 
   Ride({
     required this.id,
     required this.driverId,
-    required this.driverName,
-    this.driverImageUrl,
-    required this.driverRating,
     required this.fromCity,
     required this.toCity,
     required this.departureDate,
-    required this.departureTime,
-    required this.availableSeats,
-    required this.totalSeats,
     required this.pricePerSeat,
-    this.vehicleId,
-    this.vehicle,
-    this.intermediateStops = const [],
-    required this.preferences,
+    required this.availableSeats,
+    this.description,
+    this.preferences,
     this.status = RideStatus.active,
     required this.createdAt,
     required this.updatedAt,
+    this.vehicleInfo,
   });
 
   factory Ride.fromJson(Map<String, dynamic> json) {
     return Ride(
       id: json['id'] as String,
       driverId: json['driverId'] as String,
-      driverName: json['driverName'] as String,
-      driverImageUrl: json['driverImageUrl'] as String?,
-      driverRating: (json['driverRating'] as num?)?.toDouble() ?? 0.0,
       fromCity: json['fromCity'] as String,
       toCity: json['toCity'] as String,
       departureDate: DateTime.parse(json['departureDate'] as String),
-      departureTime: json['departureTime'] as String,
-      availableSeats: json['availableSeats'] as int,
-      totalSeats: json['totalSeats'] as int,
       pricePerSeat: (json['pricePerSeat'] as num).toDouble(),
-      vehicleId: json['vehicleId'] as String?,
-      vehicle: json['vehicle'] != null
-          ? Vehicle.fromJson(json['vehicle'] as Map<String, dynamic>)
+      availableSeats: json['availableSeats'] as int,
+      description: json['description'] as String?,
+      preferences: json['preferences'] != null 
+          ? RidePreferences.fromJson(json['preferences'] as Map<String, dynamic>)
           : null,
-      intermediateStops: (json['intermediateStops'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
-          [],
-      preferences: RidePreferences.fromJson(
-          json['preferences'] as Map<String, dynamic>),
       status: RideStatus.values.firstWhere(
         (e) => e.toString() == 'RideStatus.${json['status']}',
         orElse: () => RideStatus.active,
       ),
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
+      vehicleInfo: json['vehicleInfo'] as Map<String, dynamic>?,
     );
   }
 
@@ -122,23 +100,51 @@ class Ride {
     return {
       'id': id,
       'driverId': driverId,
-      'driverName': driverName,
-      'driverImageUrl': driverImageUrl,
-      'driverRating': driverRating,
       'fromCity': fromCity,
       'toCity': toCity,
       'departureDate': departureDate.toIso8601String(),
-      'departureTime': departureTime,
-      'availableSeats': availableSeats,
-      'totalSeats': totalSeats,
       'pricePerSeat': pricePerSeat,
-      'vehicleId': vehicleId,
-      'vehicle': vehicle?.toJson(),
-      'intermediateStops': intermediateStops,
-      'preferences': preferences.toJson(),
+      'availableSeats': availableSeats,
+      'description': description,
+      'preferences': preferences?.toJson(),
       'status': status.toString().split('.').last,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
+  }
+
+  // ==========================
+  // copyWith
+  // ==========================
+  Ride copyWith({
+    String? id,
+    String? driverId,
+    String? fromCity,
+    String? toCity,
+    DateTime? departureDate,
+    int? availableSeats,
+    double? pricePerSeat,
+    String? description,
+    Map<String, dynamic>? vehicleInfo,
+    RidePreferences? preferences,
+    RideStatus? status,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return Ride(
+      id: id ?? this.id,
+      driverId: driverId ?? this.driverId,
+      fromCity: fromCity ?? this.fromCity,
+      toCity: toCity ?? this.toCity,
+      departureDate: departureDate ?? this.departureDate,
+      availableSeats: availableSeats ?? this.availableSeats,
+      pricePerSeat: pricePerSeat ?? this.pricePerSeat,
+      description: description ?? this.description,
+      vehicleInfo: vehicleInfo ?? this.vehicleInfo,
+      preferences: preferences ?? this.preferences,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
   }
 }

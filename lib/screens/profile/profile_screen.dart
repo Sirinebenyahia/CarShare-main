@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
+import '../../providers/user_provider.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../config/theme.dart';
 
@@ -21,9 +21,9 @@ class ProfileScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Consumer<AuthProvider>(
-        builder: (context, authProvider, _) {
-          final user = authProvider.currentUser;
+      body: Consumer<UserProvider>(
+        builder: (context, userProvider, _) {
+          final user = userProvider.user;
 
           if (user == null) {
             return const Center(child: CircularProgressIndicator());
@@ -32,7 +32,7 @@ class ProfileScreen extends StatelessWidget {
           return SingleChildScrollView(
             child: Column(
               children: [
-                // Profile Header
+                // ================= HEADER =================
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(24),
@@ -48,31 +48,31 @@ class ProfileScreen extends StatelessWidget {
                           CircleAvatar(
                             radius: 60,
                             backgroundColor: Colors.white,
-                            child: user.profileImageUrl != null
-                                ? null
-                                : Text(
+                            backgroundImage: user.profileImageUrl != null
+                                ? NetworkImage(user.profileImageUrl!)
+                                : null,
+                            child: user.profileImageUrl == null
+                                ? Text(
                                     user.fullName.substring(0, 1).toUpperCase(),
                                     style: const TextStyle(
                                       fontSize: 48,
                                       fontWeight: FontWeight.bold,
                                       color: AppTheme.primaryBlue,
                                     ),
-                                  ),
+                                  )
+                                : null,
                           ),
                           if (user.isVerified)
-                            Positioned(
+                            const Positioned(
                               bottom: 0,
                               right: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: AppTheme.successGreen,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
+                              child: CircleAvatar(
+                                radius: 14,
+                                backgroundColor: AppTheme.successGreen,
+                                child: Icon(
                                   Icons.verified,
                                   color: Colors.white,
-                                  size: 24,
+                                  size: 18,
                                 ),
                               ),
                             ),
@@ -95,11 +95,11 @@ class ProfileScreen extends StatelessWidget {
                           fontSize: 16,
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.star, color: Colors.amber, size: 20),
+                          const Icon(Icons.star, color: Colors.amber),
                           const SizedBox(width: 4),
                           Text(
                             user.rating.toStringAsFixed(1),
@@ -115,31 +115,25 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
 
-                // Stats
-                Container(
+                // ================= STATS =================
+                Padding(
                   padding: const EdgeInsets.all(20),
                   child: Row(
                     children: [
                       Expanded(
-                        child: _buildStatCard(
-                          'Trajets',
-                          '${user.totalRides}',
-                          Icons.directions_car,
-                        ),
+                        child: _stat('Trajets', user.totalRides.toString(),
+                            Icons.directions_car),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: _buildStatCard(
-                          'Note',
-                          user.rating.toStringAsFixed(1),
-                          Icons.star,
-                        ),
+                        child: _stat('Note',
+                            user.rating.toStringAsFixed(1), Icons.star),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: _buildStatCard(
-                          'Membre depuis',
-                          _getYearsSince(user.createdAt),
+                        child: _stat(
+                          'Membre',
+                          _yearsSince(user.createdAt),
                           Icons.calendar_today,
                         ),
                       ),
@@ -147,93 +141,38 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
 
-                const Divider(height: 1),
+                const Divider(),
 
-                // Info Section
-                _buildInfoSection(
+                // ================= INFO =================
+                _section(
                   'Informations personnelles',
                   [
-                    _buildInfoTile(
-                      Icons.phone,
-                      'Téléphone',
-                      user.phoneNumber ?? 'Non renseigné',
-                    ),
-                    _buildInfoTile(
-                      Icons.location_city,
-                      'Ville',
-                      user.city ?? 'Non renseignée',
-                    ),
-                    _buildInfoTile(
+                    _tile(Icons.phone, 'Téléphone',
+                        user.phoneNumber ?? 'Non renseigné'),
+                    _tile(Icons.location_city, 'Ville',
+                        user.city ?? 'Non renseignée'),
+                    _tile(
                       Icons.cake,
                       'Date de naissance',
                       user.dateOfBirth != null
                           ? '${user.dateOfBirth!.day}/${user.dateOfBirth!.month}/${user.dateOfBirth!.year}'
                           : 'Non renseignée',
                     ),
-                    if (user.bio != null && user.bio!.isNotEmpty)
-                      _buildInfoTile(
-                        Icons.info_outline,
-                        'Bio',
-                        user.bio!,
-                      ),
                   ],
                 ),
 
-                const Divider(height: 1),
+                const Divider(),
 
-                // Verification Section
-                _buildInfoSection(
-                  'Vérification',
-                  [
-                    ListTile(
-                      leading: Icon(
-                        user.isVerified ? Icons.verified : Icons.cancel,
-                        color: user.isVerified
-                            ? AppTheme.successGreen
-                            : AppTheme.errorRed,
-                      ),
-                      title: Text(
-                        user.isVerified
-                            ? 'Profil vérifié'
-                            : 'Profil non vérifié',
-                      ),
-                      trailing: user.isVerified
-                          ? null
-                          : TextButton(
-                              onPressed: () {
-                                // TODO: Navigate to verification
-                              },
-                              child: const Text('Vérifier'),
-                            ),
-                    ),
-                  ],
-                ),
-
-                const Divider(height: 1),
-
-                // Actions
+                // ================= ACTIONS =================
                 Padding(
                   padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      CustomButton(
-                        text: 'Modifier le profil',
-                        icon: Icons.edit,
-                        isOutlined: true,
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/edit-profile');
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      CustomButton(
-                        text: 'Voir mes avis',
-                        icon: Icons.rate_review,
-                        isOutlined: true,
-                        onPressed: () {
-                          // TODO: Navigate to reviews
-                        },
-                      ),
-                    ],
+                  child: CustomButton(
+                    text: 'Modifier le profil',
+                    icon: Icons.edit,
+                    isOutlined: true,
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/edit-profile');
+                    },
                   ),
                 ),
               ],
@@ -244,7 +183,9 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon) {
+  // ================= HELPERS =================
+
+  Widget _stat(String label, String value, IconData icon) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -253,7 +194,7 @@ class ProfileScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(icon, color: AppTheme.primaryBlue, size: 24),
+          Icon(icon, color: AppTheme.primaryBlue),
           const SizedBox(height: 8),
           Text(
             value,
@@ -263,21 +204,16 @@ class ProfileScreen extends StatelessWidget {
               color: AppTheme.primaryBlue,
             ),
           ),
-          const SizedBox(height: 4),
           Text(
             label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(color: Colors.grey[600], fontSize: 12),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildInfoSection(String title, List<Widget> children) {
+  Widget _section(String title, List<Widget> children) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -285,10 +221,7 @@ class ProfileScreen extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           child: Text(
             title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ),
         ...children,
@@ -296,30 +229,21 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoTile(IconData icon, String label, String value) {
+  Widget _tile(IconData icon, String label, String value) {
     return ListTile(
       leading: Icon(icon, color: AppTheme.greyText),
       title: Text(label),
       subtitle: Text(
         value,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: Colors.black,
-        ),
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     );
   }
 
-  String _getYearsSince(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-    final years = difference.inDays ~/ 365;
-    
-    if (years == 0) {
-      final months = difference.inDays ~/ 30;
-      return '${months}m';
-    }
+  String _yearsSince(DateTime date) {
+    final diff = DateTime.now().difference(date);
+    final years = diff.inDays ~/ 365;
+    if (years == 0) return '${diff.inDays ~/ 30}m';
     return '${years}a';
   }
 }

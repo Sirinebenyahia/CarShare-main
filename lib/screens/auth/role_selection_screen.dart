@@ -29,11 +29,22 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     final args = ModalRoute.of(context)!.settings.arguments as Map<String, String>;
 
     try {
+      // Nettoyer et valider les données avant l'inscription
+      final email = args['email']?.trim() ?? '';
+      final password = args['password'] ?? '';
+      final fullName = args['fullName']?.trim() ?? '';
+      final phoneNumber = args['phoneNumber']?.trim() ?? '';
+
+      // Validation supplémentaire
+      if (email.isEmpty || !email.contains('@')) {
+        throw Exception('Email invalide');
+      }
+
       await context.read<AuthProvider>().register(
-        email: args['email']!,
-        password: args['password']!,
-        fullName: args['fullName']!,
-        phoneNumber: args['phoneNumber']!,
+        email: email,
+        password: password,
+        fullName: fullName,
+        phoneNumber: phoneNumber,
         role: _selectedRole!,
       );
 

@@ -1,77 +1,64 @@
 import 'package:flutter/material.dart';
-import '../models/user.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class AuthProvider with ChangeNotifier {
-  User? _currentUser;
-  bool _isLoading = false;
+import '../services/auth_service.dart';
+import '../services/user_service.dart';
+import '../models/user.dart' as app;
+
+class AuthProvider extends ChangeNotifier {
+  final AuthService _authService = AuthService();
+  final UserService _userService = UserService();
+
   bool _isAuthenticated = false;
+  bool _isLoading = false;
+  app.User? _currentUser;
 
-  User? get currentUser => _currentUser;
-  bool get isLoading => _isLoading;
   bool get isAuthenticated => _isAuthenticated;
-  UserRole? get userRole => _currentUser?.role;
+  bool get isLoading => _isLoading;
+  app.User? get currentUser => _currentUser;
 
-  // Mock login - remplacer par vraie API
-  Future<void> login({required String email, required String password}) async {
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      // Simuler un délai réseau
-      await Future.delayed(const Duration(seconds: 1));
-
-      // Mock user
-      _currentUser = User(
-        id: '1',
-        email: email,
-        fullName: 'Utilisateur Test',
-        phoneNumber: '+216 12 345 678',
-        role: UserRole.driver,
-        city: 'Tunis',
-        isVerified: true,
-        rating: 4.5,
-        totalRides: 25,
-        createdAt: DateTime.now().subtract(const Duration(days: 180)),
-        updatedAt: DateTime.now(),
-      );
-      
-      _isAuthenticated = true;
-    } catch (e) {
-      rethrow;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
+  /// ======================
+  /// REGISTER
+  /// ======================
   Future<void> register({
     required String email,
     required String password,
     required String fullName,
     required String phoneNumber,
-    required UserRole role,
+    required app.UserRole role,
   }) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      await Future.delayed(const Duration(seconds: 1));
+      // 1️⃣ Firebase Auth
+      UserCredential cred = await _authService.signUp(
+        email: email,
+        password: password,
+      );
 
-      _currentUser = User(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+      final uid = cred.user!.uid;
+
+      // 2️⃣ Firestore user (OBLIGATOIRE)
+      final user = app.User(
+        id: uid,
         email: email,
         fullName: fullName,
         phoneNumber: phoneNumber,
         role: role,
-        isVerified: false,
-        rating: 0.0,
-        totalRides: 0,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
-      
+
+      await _userService.createUser(user);
+
+      // 3️⃣ État local
+      _currentUser = user;
       _isAuthenticated = true;
+      notifyListeners();
     } catch (e) {
+      _isLoading = false;
+      notifyListeners();
       rethrow;
     } finally {
       _isLoading = false;
@@ -79,15 +66,51 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  /// ======================
+  /// LOGIN
+  /// ======================
+  Future<void> login({
+    required String email,
+    required String password,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      UserCredential cred = await _authService.signIn(
+        email: email,
+        password: password,
+      );
+
+      final uid = cred.user!.uid;
+
+      // Charger depuis Firestore
+      _currentUser = await _userService.getUserById(uid);
+
+      _isAuthenticated = true;
+      notifyListeners();
+    } catch (e) {
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// ======================
+  /// LOGOUT
+  /// ======================
   Future<void> logout() async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      await Future.delayed(const Duration(milliseconds: 500));
-      
+      await _authService.signOut();
       _currentUser = null;
       _isAuthenticated = false;
+      notifyListeners();
     } catch (e) {
       rethrow;
     } finally {
@@ -96,20 +119,28 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  /// ======================
+  /// FORGOT PASSWORD
+  /// ======================
   Future<void> forgotPassword({required String email}) async {
-    await Future.delayed(const Duration(seconds: 1));
-    // Mock: envoi de l'email de réinitialisation
+    await _authService.sendPasswordResetEmail(email);
   }
 
-  void updateUser(User updatedUser) {
-    _currentUser = updatedUser;
-    notifyListeners();
-  }
-
-  void switchRole(UserRole newRole) {
+  /// ======================
+  /// SWITCH ROLE
+  /// ======================
+  void switchRole(app.UserRole newRole) {
     if (_currentUser != null) {
       _currentUser = _currentUser!.copyWith(role: newRole);
       notifyListeners();
     }
+  }
+
+  /// ======================
+  /// UPDATE USER
+  /// ======================
+  void updateUser(app.User updatedUser) {
+    _currentUser = updatedUser;
+    notifyListeners();
   }
 }

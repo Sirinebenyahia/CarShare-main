@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/ride_provider.dart';
+import '../../models/ride.dart';
+import '../../widgets/ride/ride_card_simple.dart';
 import '../../widgets/common/custom_button.dart';
-import '../../widgets/common/custom_text_field.dart';
-import '../../widgets/ride/ride_card.dart';
 import '../../config/theme.dart';
 import '../../config/constants.dart';
 
@@ -52,11 +52,19 @@ class _SearchRidesScreenState extends State<SearchRidesScreen> {
   }
 
   void _handleSearch() {
+    if (_fromCity == null || _toCity == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Veuillez sélectionner une ville de départ et d\'arrivée'),
+          backgroundColor: AppTheme.errorRed,
+        ),
+      );
+      return;
+    }
+
     context.read<RideProvider>().searchRides(
-          fromCity: _fromCity,
-          toCity: _toCity,
-          date: _selectedDate,
-          maxPrice: _maxPrice,
+          fromCity: _fromCity!,
+          toCity: _toCity!,
         );
   }
 
@@ -296,16 +304,7 @@ class _SearchRidesScreenState extends State<SearchRidesScreen> {
           padding: const EdgeInsets.all(16),
           itemCount: rides.length,
           itemBuilder: (context, index) {
-            return RideCard(
-              ride: rides[index],
-              onTap: () {
-                Navigator.pushNamed(
-                  context,
-                  '/ride-details',
-                  arguments: rides[index],
-                );
-              },
-            );
+            return RideCardSimple(ride: rides[index]);
           },
         );
       },

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/vehicle_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../models/vehicle.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/custom_text_field.dart';
 import '../../config/theme.dart';
@@ -22,6 +23,8 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   final _licensePlateController = TextEditingController();
   final _yearController = TextEditingController();
   final _seatsController = TextEditingController(text: '4');
+  
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -45,19 +48,27 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       return;
     }
 
+    setState(() => _isLoading = true);
+
     final userId = context.read<AuthProvider>().currentUser?.id;
     if (userId == null) return;
 
     try {
-      await context.read<VehicleProvider>().addVehicle(
-            ownerId: userId,
-            brand: _brand!,
-            model: _modelController.text.trim(),
-            color: _color!,
-            licensePlate: _licensePlateController.text.trim(),
-            year: int.parse(_yearController.text),
-            seats: int.parse(_seatsController.text),
-          );
+      final vehicle = Vehicle(
+        id: '', // Sera généré par Firebase
+        ownerId: userId,
+        brand: _brand!,
+        model: _modelController.text.trim(),
+        color: _color!,
+        year: int.parse(_yearController.text),
+        licensePlate: _licensePlateController.text.trim(),
+        seats: int.parse(_seatsController.text),
+        imageUrl: null, // TODO: Ajouter upload d'image
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      await context.read<VehicleProvider>().addVehicle(vehicle);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -76,6 +87,10 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
             backgroundColor: AppTheme.errorRed,
           ),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
