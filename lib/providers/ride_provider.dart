@@ -1,0 +1,187 @@
+import 'package:flutter/material.dart';
+import '../models/ride.dart';
+import '../services/ride_service.dart';
+import '../services/ride_service_fixed.dart';
+
+class RideProvider with ChangeNotifier {
+  final RideService _rideService = RideService();
+  final RideServiceFixed _rideServiceFixed = RideServiceFixed();
+
+  List<Ride> _allRides = [];
+  List<Ride> _myRides = [];
+  List<Ride> _searchResults = [];
+  bool _isLoading = false;
+
+  List<Ride> get allRides => _allRides;
+  List<Ride> get myRides => _myRides;
+  List<Ride> get searchResults => _searchResults;
+  bool get isLoading => _isLoading;
+
+  /// ============================
+  /// CREATE RIDE WITH VEHICLE INFO
+  /// ============================
+  Future<String> createRideWithVehicle(Ride ride, String vehicleId) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      return await _rideServiceFixed.createRideWithVehicle(ride, vehicleId);
+    } catch (e) {
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // ============================
+  // CREATE RIDE ( FIRESTORE)
+  // ============================
+  Future<void> createRide(Ride ride) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await _rideService.createRide(ride);
+    } catch (e) {
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // ============================
+  // STREAM ALL ACTIVE RIDES
+  // ============================
+  void listenToAllRides() {
+    _rideService.streamAllActiveRides().listen((rides) {
+      _allRides = rides;
+      notifyListeners();
+    });
+  }
+
+  // ============================
+  // STREAM MY RIDES
+  // ============================
+  void listenToMyRides(String driverId) {
+    _rideService.streamMyRides(driverId).listen((rides) {
+      _myRides = rides;
+      notifyListeners();
+    });
+  }
+
+  // ============================
+  // FETCH ALL ACTIVE RIDES (MÉTHODE DIRECTE)
+  // ============================
+  Future<void> fetchAllActiveRidesDirect() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final rides = await _rideService.fetchAllActiveRides();
+      _allRides = rides;
+      notifyListeners();
+    } catch (e) {
+      print('❌ Erreur fetchAllActiveRidesDirect: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // ============================
+  // LEGACY METHODS (pour compatibilité)
+  // ============================
+  Future<void> fetchAllRides() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      listenToAllRides();
+      await Future.delayed(const Duration(milliseconds: 500)); // petit délai pour le stream
+    } catch (e) {
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchMyRides(String userId) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      listenToMyRides(userId);
+      await Future.delayed(const Duration(milliseconds: 500)); // petit délai pour le stream
+    } catch (e) {
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // ============================
+  // DELETE RIDE
+  // ============================
+  Future<void> deleteRide(String rideId) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await _rideService.deleteRide(rideId);
+    } catch (e) {
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // ============================
+  // UPDATE RIDE
+  // ============================
+  Future<void> updateRide(String rideId, Map<String, dynamic> data) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await _rideService.updateRide(rideId: rideId, data: data);
+    } catch (e) {
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // ============================
+  // SEARCH RIDES
+  // ============================
+  Future<void> searchRides({
+    required String fromCity,
+    required String toCity,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      _searchResults = await _rideService.searchRides(
+        fromCity: fromCity,
+        toCity: toCity,
+      );
+    } catch (e) {
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void clearSearchResults() {
+    _searchResults = [];
+    notifyListeners();
+  }
+}
