@@ -4,6 +4,7 @@ import '../../providers/ride_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/ride.dart';
 import '../../config/theme.dart';
+import '../../screens/rides/edit_ride_screen.dart';
 import 'package:intl/intl.dart';
 
 class MyRidesScreen extends StatefulWidget {
@@ -225,10 +226,29 @@ class _MyRidesScreenState extends State<MyRidesScreen> {
   }
 
   void _editRide(Ride ride) {
-    // TODO: Naviguer vers l'écran de modification
+    // Test temporaire pour vérifier que le bouton fonctionne
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Fonctionnalité de modification bientôt disponible')),
+      SnackBar(
+        content: Text('Tentative de modification du trajet: ${ride.fromCity} → ${ride.toCity}'),
+        backgroundColor: AppTheme.primaryBlue,
+      ),
     );
+    
+    try {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => EditRideScreen(ride: ride),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur de navigation: $e'),
+          backgroundColor: AppTheme.errorRed,
+        ),
+      );
+    }
   }
 
   void _viewProposals(Ride ride) {

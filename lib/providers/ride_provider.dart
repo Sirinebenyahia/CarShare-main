@@ -135,8 +135,11 @@ class RideProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      print('DEBUG: Updating ride $rideId with data: $data');
       await _rideService.updateRide(rideId: rideId, data: data);
+      print('DEBUG: Ride updated successfully');
     } catch (e) {
+      print('DEBUG: Error updating ride: $e');
       rethrow;
     } finally {
       _isLoading = false;

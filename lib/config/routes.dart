@@ -12,6 +12,7 @@ import '../screens/dashboard/dashboard_screen.dart';
 // RIDES
 import '../screens/rides/search_rides_screen.dart';
 import '../screens/rides/create_ride_screen.dart';
+import '../screens/rides/edit_ride_screen.dart';
 import '../screens/rides/ride_details_screen.dart';
 import '../screens/rides/ride_chat_screen.dart';
 import '../screens/rides/ride_discussions_screen.dart';
@@ -57,6 +58,7 @@ class AppRoutes {
 
   static const String searchRides = '/search-rides';
   static const String createRide = '/create-ride';
+  static const String editRide = '/edit-ride';
   static const String rideDetails = '/ride-details';
   static const String rideChat = '/ride-chat';
   static const String rideDiscussions = '/ride-discussions';
@@ -93,6 +95,7 @@ class AppRoutes {
     dashboard: (_) => const DashboardScreen(),
     searchRides: (_) => const SearchRidesScreen(),
     createRide: (_) => const CreateRideScreen(),
+    editRide: (_) => throw ArgumentError('EditRideScreen requires ride argument'),
     rideDiscussions: (_) => const RideDiscussionsScreen(),
     rideRequests: (_) => const RideRequestsScreen(),
     createRequest: (_) => const CreateRequestScreen(),
@@ -122,6 +125,13 @@ class AppRoutes {
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => RideDetailsScreen(ride: ride),
+        );
+
+      case editRide:
+        final ride = settings.arguments as Ride;
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => EditRideScreen(ride: ride),
         );
 
       case groupChat:

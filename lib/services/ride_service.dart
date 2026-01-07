@@ -108,7 +108,9 @@ class RideService {
     required Map<String, dynamic> data,
   }) async {
     data['updatedAt'] = DateTime.now().toIso8601String();
+    print('DEBUG: Service - updating ride $rideId with data: $data');
     await _rides.doc(rideId).update(data);
+    print('DEBUG: Service - ride updated successfully');
   }
 
   /// ============================
