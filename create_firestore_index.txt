@@ -1,0 +1,17 @@
+# Pour créer l'index Firestore requis pour les discussions
+
+1. Ouvrez ce lien dans votre navigateur :
+https://console.firebase.google.com/v1/r/project/carshare-tunisie-app/firestore/indexes?create_composite=Cldwcm9qZWN0cy9jYXJzaGFyZS10dW5pc2llLWFwcC9kYXRhYmFzZXMvKGRlZmF1bHQpL2NvbGxlY3Rpb25Hcm91cHMvcmlkZV9jaGF0cy9pbmRleGVzL18QARoMCghkcml2ZXJJZBABGhEKDWxhc3RUaW1lc3RhbXAQAhoMCghfX25hbWVfXXAC
+
+2. Connectez-vous à Firebase Console avec votre compte
+
+3. Cliquez sur "Create Index"
+
+4. Attendez 1-2 minutes que l'index soit créé
+
+5. Une fois l'index créé, l'erreur des discussions disparaîtra automatiquement
+
+# L'index requis est :
+- Collection: ride_chats
+- Champ 1: driverId (Ascending)
+- Champ 2: lastTimestamp (Descending)
